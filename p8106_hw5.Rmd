@@ -2,7 +2,7 @@
 title: "Homework5"
 author: "Yuki Joyama"
 date: "2024-04-28"
-output: github_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -14,6 +14,7 @@ library(rsample)
 library(caret)
 library(kernlab)
 library(ISLR)
+library(factoextra)
 
 # setup plot theme
 theme_set(
@@ -125,5 +126,63 @@ df_arrest = USArrests |>
 str(df_arrest)
 ```
 
-# a
+## a
+Hierarchical clustering with complete linkage and Euclidean distance
+```{r}
+hc.complete <- hclust(dist(df_arrest), method = "complete")
 
+# dendrogram
+fviz_dend(
+  hc.complete, k = 3,
+  cex = 0.5,
+  palette = "jco",
+  color_labels_by_k = TRUE,
+  rect = TRUE, rect_fill = TRUE, rect_border = "jco",
+  labels_track_height = 2
+)
+```
+
+States are clustered as follows:  
+
+Cluster 1 - Florida, North Carolina, Delaware, Alabama, Louisiana, Alaska, Mississippi, South Carolina, Maryland, Arizona, New Mexico, California, Illinois, New York, Michigan, Nevada  
+Cluster 2 - Missouri, Arkansas, Tennessee, Georgia, Colorado, Texas, Rhode Island, Wyoming, Oregon, Oklahoma, Virginia, Washington, Massachusetts, New Jersey  
+Cluster 3 - Ohio, Utah, Connecticut, Pennsylvania, Nebraska, Kentucky, Montana, Idaho, Indiana, Kansas, Hawaii, Minnesota, Wisconsin, Iowa, New Hampshire, West Virginia, Maine, South Dakota, North Dakota, Vermont  
+
+## b
+I will scale the variables to have standard deviation one, then perform the hierarchical clustering with complete linkage and Euclidean distance. 
+
+```{r}
+df_arrest_scaled <- df_arrest |> 
+  mutate(
+    murder = scale(murder)[, 1],
+    assault = scale(assault)[, 1],
+    rape = scale(rape)[, 1],
+    urban_pop = scale(urban_pop)[, 1]
+  )
+
+# check
+sd(df_arrest_scaled$murder)
+sd(df_arrest_scaled$assault)
+sd(df_arrest_scaled$urban_pop)
+sd(df_arrest_scaled$rape)
+
+hc.complete <- hclust(dist(df_arrest_scaled), method = "complete")
+
+# dendrogram
+fviz_dend(
+  hc.complete, k = 3,
+  cex = 0.5,
+  palette = "jco",
+  color_labels_by_k = TRUE,
+  rect = TRUE, rect_fill = TRUE, rect_border = "jco",
+  labels_track_height = 2
+)
+```
+
+Cluster 1 - South Dakota, West Virginia, North Dakota, Vermont, Maine, Iowa, New Hampshire, Idaho, Montana, Nebraska, Kentucky, Arkansas, Virginia, Wyoming, Missouri, Oregon, Washington, Delaware, Rhode Island, Massachusetts, New Jersey, Connecticut, Minnesota, Wisconsin, Oklahoma, Indiana, Kansas, Ohio, Pennsylvania, Hawaii, Utah  
+Cluster 2 - Colorado, California, Nevada, Florida, Texas, Illinois, New York, Arizona, Michigan, Maryland, New Mexico  
+Cluster 3 - Alaska, Alabama, Louisiana, Georgia, Tennessee, North Carolina, Mississippi, South Carolina  
+
+## c
+Comparing the dendrograms in a and b, we can see that scaling the variables do change the clustering results. This is because the distance measures used in the clustering algorithm are affected by the scale of the variables.   
+I think we should scale the variables in this dataset before computing inter-observation dissimilarities for hierarchical clustering because the units of the variables are different between `assault`, `murder`, `rape` and `urban_pop`. This can potentially generate the biased results and scaling can mitigate it to some extent. 
